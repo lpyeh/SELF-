@@ -1,28 +1,29 @@
 /** This function contains all the code required to calculate the stress levels from the readings. */
 
-float LFHF_max_current = 0.0;
-float LFHF_min_current = 10.0;
+float LFHF_max = 0.0;
+float LFHF_min = 10.0;
 float LFHF_avg = 0.0;
 // start from "neutral"
 // a lower score is "better"/"low stress"
 // a higher score is "high stress"
 int user_score = 0;
 
-void run_Fourier() {
+void runFourier() {
   float sum = 0.0;
   int iter = 0;
   
   // start while/for
   // while curr_min < 5 min
   LFHF = Fourier();
+  // Serial.println(LFHF);
   sum += LFHF;
   iter++;
   
-  if (LFHF > LFHF_max_current) {
-      LFHF_max_current = LFHF;
+  if (LFHF > LFHF_max) {
+      LFHF_max = LFHF;
   }
-  else if (LFHF < LFHF_min_current) {
-      LFHF_min_current = LFHF;
+  else if (LFHF < LFHF_min) {
+      LFHF_min = LFHF;
   } // end while/for
 
   LFHF_avg = float(sum / iter);
@@ -30,7 +31,7 @@ void run_Fourier() {
 
 void fourier_score() {
   // could also include athlete information 
-  if (!sex) {
+  if (sex == 1 || sex == 3) {
     user_score = score_female();
   }
   else {
@@ -44,7 +45,7 @@ float Fourier(){
  // Check if we have enough data for Fourier transform (lower than 31 means not enough) 
  // if not enough, add current reading to the array
  if (dataCount < 31){
-    if (dataCount == 0) { Serial.print("Waiting to gather enough data points before running Fourier transform"); }
+    if (dataCount == 0) { Serial.print("Gathering data..."); }
     dataCount++;
     data[dataCount] = IBI;
   }
@@ -69,7 +70,7 @@ float Fourier(){
 
     // not sure if this is actually total power spectral density 
     for (int i = 0; i < 12; i++) {
-      P += fht_log_out[a];
+      P_ += fht_log_out[i];
     }
       
     for (int a = 2; a < 5; a++){
@@ -82,10 +83,6 @@ float Fourier(){
     LF=LF/3;
     HF=HF/6;
     LFHF=LF/HF;
-    
-    Serial.print("LFHF ");
-    Serial.println(LFHF);
-
     vibeTimeSet = 500*((LFHFOld + (LFHF))/2);
     LFHFOld = LFHF;
     
@@ -94,13 +91,13 @@ float Fourier(){
 }
 
 int score_female() {
-  int score = 0;
+  int score = 5;
   // young female
-  if (age <= 49 && age >= 25) {
+  if (age <= 49) {
     // if average is lower than average, lower the score
     (LFHF_avg <= YF_avg) ? score-- : score++;
     (LFHF_min <= YF_min) ? score-- : score++;
-    (LFHF_max <= YF_max) ? score-- score++;
+    (LFHF_max <= YF_max) ? score-- : score++;
   }
   // elderly female
   else {
@@ -111,12 +108,12 @@ int score_female() {
 }
 
 int score_male() {
-  int score = 0;
+  int score = 5;
   // young male
-  if (age <= 49 && age >= 25) {
+  if (age <= 49) {
     (LFHF_avg <= YM_avg) ? score-- : score++;
     (LFHF_min <= YM_min) ? score-- : score++;
-    (LFHF_max <= YM_max) ? score-- score++;
+    (LFHF_max <= YM_max) ? score-- : score++;
   }
   else {
     (LFHF_avg <= EM_avg) ? score-- : score++;
@@ -126,5 +123,7 @@ int score_male() {
 }
 
 void feedback() {
-  
+  Serial.print("User score: ");
+  Serial.println(user_score);
+  delay(20);
 }

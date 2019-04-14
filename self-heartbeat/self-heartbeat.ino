@@ -21,7 +21,7 @@
 
 long startTime;
 // CHANGE IF YOU WANT DIFFERENT TIME INTERVAL 
-long   minutes = 60000 * 5;
+long   minutes = 60000 * 2;
 
 boolean vibing = true; //checks whether vibration is currently on
 boolean silence = false;
@@ -31,12 +31,13 @@ long vibeTimer = 0;
 float HF=0;
 float LF=0;
 float LFHF,LFHFOld;
-float P = 0;
+float P_ = 0;
 
 //  Variables
-//int sensorVcc = 12;
-int pulsePin = A0;                 // Pulse Sensor purple wire connected to analog pin 0
+int pulsePin = 1;                 // Pulse Sensor purple wire connected to analog pin 0
 int blinkPin = 13;                // pin to blink led at each beat
+int fadePin = 5;                  // pin to do fancy classy fading blink at each beat
+int fadeRate = 0;                 // used to fade LED on with PWM on fadePin
 
 // Volatile Variables, used in the interrupt service routine!
 volatile int BPM;                   // int that holds raw Analog in 0. updated every 2mS
@@ -90,13 +91,14 @@ String HTTP_req;
 void serialOutputWhenBeatHappens();
 void interruptSetup();
 void getInfo();
+void runFourier();
 
 void setup(){
  // pinMode(sensorVcc,OUTPUT);
  // digitalWrite(sensorVcc,HIGH);
   
   pinMode(blinkPin,OUTPUT);         // pin that will blink to your heartbeat!
-  pinMode(4, OUTPUT);         // disable SD card
+  pinMode(fadePin, OUTPUT);         // disable SD card - put 4 in fadePin spot
   digitalWrite(4, HIGH);     // disable SD card
 
   Serial.begin(115200);             // we agree to talk fast!
@@ -138,11 +140,11 @@ void runEthernet() {
 //  Where the Magic Happens
 void loop(){
   // can change - set at 5 minutes 
-  if (millis() - startTime <= minutes) {
-    fourier_score();
-    startTime = millis();
+  if (millis() - startTime <= minutes) {  
+   runFourier();
   }
   else {
-    runFourier();
+    fourier_score();
+    startTime = millis();
   }
 }
